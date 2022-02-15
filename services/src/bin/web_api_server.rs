@@ -1,8 +1,9 @@
+use std::net::{IpAddr, SocketAddr};
+
 use actix_web::{App, HttpServer};
 use anyhow::anyhow;
 
 use adapters::handlers::hello;
-
 use common::ENV_VALUES;
 
 /// ログの出力方法を設定する。
@@ -25,14 +26,33 @@ fn init_logging() -> anyhow::Result<()> {
     }
 }
 
+/// 環境変数からホスト名とポート番号を取得して、Webアプリケーションのソケットアドレスを返却する。
+///
+/// # Returns
+///
+/// `Result`。返却される`Result`の内容を以下に示す。
+///
+/// * `Ok`: ソケットアドレス。
+/// * `Err`: エラー。
+fn server_socket_address() -> anyhow::Result<SocketAddr> {
+    Ok(SocketAddr::new(
+        IpAddr::V4(ENV_VALUES.web_server_address),
+        ENV_VALUES.web_server_port,
+    ))
+}
+
 /// Web APIサーバーのエントリポイント
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // ロギングを設定
+    // 環境変数の内容でロギングを設定
     init_logging().unwrap();
 
+    // 環境変数からWeb APIサーバーのソケットアドレスを取得
+    let address = server_socket_address().unwrap();
+
+    // Web APIサーバーを起動
     HttpServer::new(|| App::new().service(hello))
-        .bind("127.0.0.1:8000")?
+        .bind(address)?
         .run()
         .await
 }
