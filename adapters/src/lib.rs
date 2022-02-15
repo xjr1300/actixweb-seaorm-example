@@ -47,18 +47,17 @@ pub async fn run(address: &SocketAddr) -> anyhow::Result<()> {
             .service(
                 web::scope("/").service(web::resource("").route(web::get().to(handlers::hello))),
             )
-            .service(
-                web::scope("/prefectures")
-                    .service(web::resource("").route(web::get().to(handlers::prefectures::list)))
-                    .service(
-                        web::resource("/{code}")
-                            .route(web::get().to(handlers::prefectures::find_by_code)),
-                    ),
-            )
+            .service(prefecture_scope())
     })
     .bind(address)?
     .run()
     .await?;
 
     Ok(())
+}
+
+fn prefecture_scope() -> actix_web::Scope {
+    web::scope("/prefectures")
+        .service(web::resource("").route(web::get().to(handlers::prefectures::list)))
+        .service(web::resource("/{code}").route(web::get().to(handlers::prefectures::find_by_code)))
 }
