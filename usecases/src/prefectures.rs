@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use sea_orm::ConnectionTrait;
 
 use domains::models::common::Prefecture;
@@ -38,11 +36,11 @@ pub async fn list(db_service: &dyn DatabaseService) -> anyhow::Result<Vec<Prefec
 /// * `Ok`: 都道府県。検索できなかった場合は`None`。
 /// * `Err`: エラー。
 pub async fn find_by_code(
-    repos: Arc<dyn DatabaseService>,
+    db_service: &dyn DatabaseService,
     code: u8,
 ) -> anyhow::Result<Option<Prefecture>> {
-    let txn = repos.connection().begin().await?;
-    let result = repos.prefecture(&txn).find_by_code(code).await?;
+    let txn = db_service.connection().begin().await?;
+    let result = db_service.prefecture(&txn).find_by_code(code).await?;
     txn.commit().await?;
 
     Ok(result)
