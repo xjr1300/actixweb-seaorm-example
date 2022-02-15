@@ -9,9 +9,9 @@ pub struct EnvValues {
     /// JWTトークン秘密鍵。
     pub jwt_token_secret_key: String,
     /// JWTアクセストークン有効秒数。
-    pub access_token_seconds: u64,
+    pub access_token_seconds: i64,
     /// JWTリフレッシュトークン有効秒数。
-    pub refresh_token_seconds: u64,
+    pub refresh_token_seconds: i64,
     /// WebサーバーのIPアドレス。
     pub web_server_address: Ipv4Addr,
     /// Webサーバーのポート番号。
@@ -46,11 +46,11 @@ pub static ENV_VALUES: Lazy<EnvValues> = Lazy::new(|| {
             .expect("環境変数にSECRET_KEYが設定されていません。"),
         access_token_seconds: env::var("ACCESS_TOKEN_SECONDS")
             .expect("環境変数にACCESS_TOKEN_SECONDSが設定されていません。")
-            .parse::<u64>()
+            .parse::<i64>()
             .expect("環境変数に設定されているACCESS_TOKEN_SECONDSが不正です。"),
         refresh_token_seconds: env::var("REFRESH_TOKEN_SECONDS")
             .expect("環境変数にREFRESH_TOKEN_SECONDSが設定されていません。")
-            .parse::<u64>()
+            .parse::<i64>()
             .expect("環境変数に設定されているREFRESH_TOKEN_SECONDSが不正です。"),
         web_server_address,
         web_server_port: env::var("WEB_SERVER_PORT")
