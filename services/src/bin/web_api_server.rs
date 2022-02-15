@@ -2,6 +2,7 @@ use std::net::{IpAddr, SocketAddr};
 
 use actix_web::{App, HttpServer};
 use anyhow::anyhow;
+use sea_orm::{Database, DatabaseConnection};
 
 use adapters::handlers::hello;
 use common::ENV_VALUES;
@@ -41,6 +42,22 @@ fn server_socket_address() -> anyhow::Result<SocketAddr> {
     ))
 }
 
+/// データーベースコネクションを取得する。
+///
+/// # Returns
+///
+/// `Result`。返却される`Result`の内容を以下に示す。
+///
+/// * `Ok`: データベースコネクション。
+/// * `Err`: エラー。
+async fn database_connection() -> anyhow::Result<DatabaseConnection> {
+    Database::connect(&ENV_VALUES.database_url)
+        .await
+        .map_err(|_| {
+            anyhow!("環境変数に設定されているDATABASE_URLで、データベースに接続できません。")
+        })
+}
+
 /// Web APIサーバーのエントリポイント
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -49,6 +66,11 @@ async fn main() -> std::io::Result<()> {
 
     // 環境変数からWeb APIサーバーのソケットアドレスを取得
     let address = server_socket_address().unwrap();
+
+    // データベースに接続
+    log::info!("Connecting to database...");
+    let _conn = database_connection().await.unwrap();
+    log::info!("Connected to database...");
 
     // Web APIサーバーを起動
     HttpServer::new(|| App::new().service(hello))

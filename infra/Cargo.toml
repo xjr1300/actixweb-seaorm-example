@@ -3,7 +3,9 @@ name = "infra"
 version = "0.1.0"
 edition = "2021"
 
+[dependencies]
+
 [dependencies.sea-orm]
-version = "0.5"
-features = ["sqlx-postgres", "runtime-actix-rustls", "macros", "debug-print"]
+version = "^0"
+features = ["sqlx-postgres", "runtime-actix-native-tls", "macros", "debug-print"]
 default-features = false
