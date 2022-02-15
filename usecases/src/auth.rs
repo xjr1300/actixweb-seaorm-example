@@ -1,7 +1,13 @@
-use std::{borrow::Cow, collections::BTreeMap};
+use std::borrow::Cow;
 
 use chrono::{DateTime, Duration, FixedOffset};
-use common::ENV_VALUES;
+use sea_orm::{ConnectionTrait, DatabaseConnection, DatabaseTransaction};
+use serde::{Deserialize, Serialize};
+
+use common::{
+    jwt_token::{gen_jwt_token, Claims},
+    ENV_VALUES,
+};
 use domains::{
     models::{
         accounts::{Account, AccountId, RawPassword},
@@ -11,11 +17,6 @@ use domains::{
     repositories::{accounts::AccountRepository, auth::JwtTokensRepository},
     services::auth::authenticate,
 };
-use hmac::{Hmac, Mac};
-use jwt::{SignWithKey, VerifyWithKey};
-use sea_orm::{ConnectionTrait, DatabaseConnection, DatabaseTransaction};
-use serde::{Deserialize, Serialize};
-use sha2::Sha256;
 
 use crate::database_service::DatabaseService;
 
@@ -162,65 +163,6 @@ async fn authenticate_account(
     Ok(account.unwrap())
 }
 
-/// JWTトークンを生成する。
-///
-/// # Arguments
-///
-/// * `id` - アカウントID。
-///
-/// # Returns
-///
-/// `Result`。返却される`Result`の内容は以下の通り。
-///
-/// * `Ok`: JWT。
-/// * `Err`: エラー。
-pub fn gen_jwt_token(id: AccountId, expired: DateTime<FixedOffset>) -> anyhow::Result<String> {
-    // 環境変数から秘密鍵を取得
-    let secret_key = &ENV_VALUES.jwt_token_secret_key;
-    // アカウントIDを文字列に変更
-    let id = id.value.to_string();
-    // 有効期限をUnixエポック(1970-01-01(UTC))からの経過秒数を示す文字列に変更
-    let exp = expired.timestamp().to_string();
-    // 鍵を生成
-    let key: Hmac<Sha256> = Hmac::new_from_slice(secret_key.as_bytes())?;
-    // JWTを生成
-    let mut claims = BTreeMap::new();
-    claims.insert("sub", &id);
-    claims.insert("exp", &exp);
-    let token = claims.sign_with_key(&key)?;
-
-    Ok(token)
-}
-
-#[cfg(test)]
-mod auth_tests {
-    use super::*;
-    use common::ENV_VALUES;
-    use domains::models::accounts::AccountId;
-    use dotenv;
-    use jwt::VerifyWithKey;
-
-    /// JWTを正常に生成できることを確認する。
-    #[test]
-    fn test_gen_jwt() {
-        dotenv::from_filename(".env.dev").ok();
-        // JWTを生成
-        let id = AccountId::gen();
-        let expired = local_now(None) + Duration::days(1);
-        let token = gen_jwt_token(id.clone(), expired);
-        if let Err(ref err) = token {
-            assert!(false, "JWTを生成できませんでした。{:?}。", err);
-        }
-        // 生成したトークンを検証
-        let token = token.unwrap();
-        let secret_key = &ENV_VALUES.jwt_token_secret_key;
-        let key: Hmac<Sha256> = Hmac::new_from_slice(secret_key.as_bytes()).unwrap();
-        let claims: BTreeMap<String, String> = token.verify_with_key(&key).unwrap();
-        assert_eq!(claims["sub"], id.value.to_string());
-        assert_eq!(claims["exp"], expired.timestamp().to_string());
-    }
-}
-
 /// 有効期限付きアクセス・リフレッシュトークンを生成する。
 ///
 /// # Arguments
@@ -239,11 +181,16 @@ fn gen_jwt_tokens(account_id: AccountId) -> Result<JwtTokens, Error> {
     let access_expired_at = now + Duration::seconds(ENV_VALUES.access_token_seconds);
     let refresh_expired_at = now + Duration::seconds(ENV_VALUES.refresh_token_seconds);
     // トークンを生成
-    let access = gen_jwt_token(account_id.clone(), access_expired_at);
+    let mut claims = Claims {
+        sub: account_id.value.to_string().clone(),
+        exp: access_expired_at.timestamp(),
+    };
+    let access = gen_jwt_token(&claims);
     if let Err(err) = access {
         return Err(internal_server_error(err.into()));
     }
-    let refresh = gen_jwt_token(account_id.clone(), refresh_expired_at);
+    claims.exp = refresh_expired_at.timestamp();
+    let refresh = gen_jwt_token(&claims);
     if let Err(err) = refresh {
         return Err(internal_server_error(err.into()));
     }

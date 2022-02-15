@@ -1,3 +1,5 @@
+pub mod jwt_token;
+
 use std::{env, net::Ipv4Addr, str::FromStr};
 
 use dotenv::dotenv;
