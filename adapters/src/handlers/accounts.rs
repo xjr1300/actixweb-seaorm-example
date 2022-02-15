@@ -3,7 +3,7 @@ use serde_json::json;
 
 use domains::models::accounts::AccountId;
 use usecases::{
-    accounts::{ErrorKind, NewAccount},
+    accounts::{ErrorKind, NewAccount, UpdateAccount},
     database_service::DatabaseService,
 };
 
@@ -71,6 +71,35 @@ pub async fn insert(
             log::error!("{:?}", err);
             let mut response = match err.code {
                 ErrorKind::InternalServerError => HttpResponse::InternalServerError(),
+                ErrorKind::PrefectureNotFound => HttpResponse::NotFound(),
+                _ => HttpResponse::BadRequest(),
+            };
+            response.json(json!({"message": err.message}))
+        }
+    }
+}
+
+/// アカウント更新API
+///
+/// # Arguments
+///
+/// * `db_service` - データベースサービス。
+/// * `update_account` - 更新するアカウント。
+///
+/// # Returns
+///
+/// レスポンス。
+pub async fn update(
+    db_service: web::Data<dyn DatabaseService>,
+    update_account: web::Json<UpdateAccount>,
+) -> impl Responder {
+    match usecases::accounts::update(db_service.as_ref(), update_account.into_inner()).await {
+        Ok(account) => HttpResponse::Ok().json(account),
+        Err(err) => {
+            log::error!("{:?}", err);
+            let mut response = match err.code {
+                ErrorKind::InternalServerError => HttpResponse::InternalServerError(),
+                ErrorKind::NotFound => HttpResponse::NotFound(),
                 ErrorKind::PrefectureNotFound => HttpResponse::NotFound(),
                 _ => HttpResponse::BadRequest(),
             };

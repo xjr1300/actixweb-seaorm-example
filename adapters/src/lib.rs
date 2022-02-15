@@ -60,8 +60,11 @@ pub async fn run(address: &SocketAddr) -> anyhow::Result<()> {
 /// 都道府県スコープ
 fn prefecture_scope() -> actix_web::Scope {
     web::scope("/prefectures")
-        .service(web::resource("").route(web::get().to(handlers::prefectures::list)))
-        .service(web::resource("/{code}").route(web::get().to(handlers::prefectures::find_by_code)))
+        .route("", web::get().to(handlers::prefectures::list))
+        .route(
+            "/{code}",
+            web::get().to(handlers::prefectures::find_by_code),
+        )
 }
 
 /// アカウントスコープ
@@ -71,8 +74,14 @@ fn prefecture_scope() -> actix_web::Scope {
 /// ```bash
 /// curl --include --request POST --header "Content-Type: application/json" --data '{"email": "foo@example.com", "name": "foo", "password": "012abcEFG=+", "isActive": true, "fixedNumber": "012-345-6789", "mobileNumber": "090-1234-5678", "postalCode": "012-3456", "prefectureCode": 13, "addressDetails": "千代田区永田町1-7-1"}' http://127.0.0.1:8000/accounts
 /// ```
+///
+/// # アカウント更新API
+/// ```bash
+/// curl --include --request PUT --header "Content-Type: application/json" --data '{"id": "01FV16ZJA66853VNZGY8GWK8GT", "name": "foo", "isActive": false, "fixedNumber": "06-6208-8181", "postalCode": "530-8201", "prefectureCode": 27, "addressDetails": "大阪市北区中之島1-3-20"}' http://127.0.0.1:8000/accounts/01FV16ZJA66853VNZGY8GWK8GT
+/// ```
 fn accounts_scope() -> actix_web::Scope {
     web::scope("/accounts")
-        .service(web::resource("").route(web::post().to(handlers::accounts::insert)))
-        .service(web::resource("/{id}").route(web::get().to(handlers::accounts::find_by_id)))
+        .route("", web::post().to(handlers::accounts::insert))
+        .route("/{id}", web::get().to(handlers::accounts::find_by_id))
+        .route("/{id}", web::put().to(handlers::accounts::update))
 }

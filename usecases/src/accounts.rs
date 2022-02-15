@@ -465,7 +465,7 @@ pub struct UpdateAccount {
 ///
 /// # Arguments
 ///
-/// * `repos`: リポジトリエクステンション。
+/// * `db_service`: データベースサービス。
 /// * `account`: 更新するアカウント。
 ///
 /// # Returns
@@ -475,7 +475,7 @@ pub struct UpdateAccount {
 /// * `Ok`: 更新後のアカウント。アカウントが見つからなかった場合、都道府県コードが不正な場合はNone。
 /// * `Err`: エラー。
 pub async fn update(
-    repos: Arc<dyn DatabaseService>,
+    db_service: &dyn DatabaseService,
     account: UpdateAccount,
 ) -> Result<AccountDto, Error> {
     // 返却するアカウント
@@ -490,12 +490,12 @@ pub async fn update(
     let postal_code = to_postal_code(&account.postal_code)?;
     let address_details = to_address_details(&account.address_details)?;
     // トランザクションを開始
-    let txn = begin_transaction(&repos.connection()).await?;
+    let txn = begin_transaction(&db_service.connection()).await?;
     {
         // アカウントに記録されていた都道府県コードから都道府県を取得
-        let prefecture = retrieve_prefecture(&*repos, &txn, account.prefecture_code).await?;
+        let prefecture = retrieve_prefecture(db_service, &txn, account.prefecture_code).await?;
         // 更新するアカウントを取得
-        let mut target = find_account(&*repos, &txn, account_id).await?;
+        let mut target = find_account(db_service, &txn, account_id).await?;
         // 更新するアカウントに値を設定
         target.set_name(name);
         target.set_is_active(account.is_active);
@@ -504,7 +504,7 @@ pub async fn update(
         target.set_address(Address::new(prefecture, address_details));
         target.set_updated_at(local_now(None));
         // アカウントを更新
-        let result = repos.account(&txn).update(&target).await;
+        let result = db_service.account(&txn).update(&target).await;
         if let Err(err) = result {
             return Err(internal_error(err.into()));
         }
