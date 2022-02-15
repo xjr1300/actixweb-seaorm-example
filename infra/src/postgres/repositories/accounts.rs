@@ -39,7 +39,7 @@ fn model_to_account(account: &accounts::Model, prefecture: &prefectures::Model) 
     let address_details = AddressDetails::new(&account.address_details).unwrap();
 
     Account::new_unchecked(
-        AccountId::try_from(account.id.clone()).unwrap(),
+        AccountId::try_from(account.id.as_str()).unwrap(),
         EmailAddress::new(&account.email).unwrap(),
         AccountName::new(&account.name).unwrap(),
         HashedPassword::new_unchecked(&account.password),

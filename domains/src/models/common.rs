@@ -45,7 +45,7 @@ impl<T> EntityId<T> {
     }
 }
 
-impl<T> TryFrom<String> for EntityId<T> {
+impl<T> TryFrom<&str> for EntityId<T> {
     type Error = anyhow::Error;
 
     /// 文字列からエンティティIDを構築して返却する。
@@ -53,8 +53,8 @@ impl<T> TryFrom<String> for EntityId<T> {
     /// # Arguments
     ///
     /// * `value` - エンティティIDを構築する文字列。
-    fn try_from(value: String) -> anyhow::Result<Self, Self::Error> {
-        Ulid::from_string(&value)
+    fn try_from(value: &str) -> anyhow::Result<Self, Self::Error> {
+        Ulid::from_string(value)
             .map(|id| Self::new(id))
             .map_err(|err| anyhow!("{:?}", err))
     }
@@ -76,14 +76,14 @@ mod entity_id_tests {
     #[test]
     fn entity_id_from_string() {
         // cSpell: ignore 01D39ZY06FGSCTVN4T2V9PKHFZ
-        let id = EntityId::<i32>::try_from(String::from("01D39ZY06FGSCTVN4T2V9PKHFZ"));
+        let id = EntityId::<i32>::try_from("01D39ZY06FGSCTVN4T2V9PKHFZ");
         assert!(id.is_ok());
     }
 
     /// ULID文字列以外の文字列からエンティティIDを構築できないことを確認する。
     #[test]
     fn entity_id_from_invalid_string() {
-        let id = EntityId::<i32>::try_from(String::from("invalid-ulid-string"));
+        let id = EntityId::<i32>::try_from("invalid-ulid-string");
         assert!(id.is_err());
     }
 }

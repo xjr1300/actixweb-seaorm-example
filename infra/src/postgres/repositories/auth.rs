@@ -39,8 +39,8 @@ fn db_to_model(db: &Model) -> auth::JwtTokens {
         expired_at: db.refresh_expired_at,
     };
     auth::JwtTokens::new(
-        JwtTokensId::try_from(db.id.clone()).unwrap(),
-        AccountId::try_from(db.account_id.clone()).unwrap(),
+        JwtTokensId::try_from(db.id.as_str()).unwrap(),
+        AccountId::try_from(db.account_id.as_str()).unwrap(),
         access,
         refresh,
     )

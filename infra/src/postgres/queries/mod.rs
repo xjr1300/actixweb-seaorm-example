@@ -66,7 +66,7 @@ impl AccountQueryService for PgAccountQueryService<'_> {
             return Ok(None);
         }
         let result = result.unwrap();
-        let account_id = AccountId::try_from(result.id.clone()).unwrap();
+        let account_id = AccountId::try_from(result.id.as_str()).unwrap();
         let phone_numbers = FixedMobileNumbers::new(
             optional_phone_number(result.fixed_number.as_deref()).unwrap(),
             optional_phone_number(result.mobile_number.as_deref()).unwrap(),
@@ -89,7 +89,7 @@ impl AccountQueryService for PgAccountQueryService<'_> {
         );
         let mut tokens: Option<JwtTokens> = None;
         if result.access.is_some() {
-            let tokens_id = JwtTokensId::try_from(result.tokens_id.clone()).unwrap();
+            let tokens_id = JwtTokensId::try_from(result.tokens_id.as_str()).unwrap();
             let access = JwtTokenWithExpiredAt {
                 token: JwtToken::new(&result.access.unwrap()).unwrap(),
                 expired_at: result.access_expired_at.unwrap(),

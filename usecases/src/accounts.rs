@@ -138,7 +138,7 @@ async fn begin_transaction(conn: &DatabaseConnection) -> Result<DatabaseTransact
 ///
 /// # Arguments
 ///
-/// * `repos`: リポジトリエクステンション。
+/// * `db_service`: リポジトリエクステンション。
 /// * `txn`: データベーストランザクション。
 /// * `code`: 都道府県コード。
 ///
@@ -147,11 +147,11 @@ async fn begin_transaction(conn: &DatabaseConnection) -> Result<DatabaseTransact
 /// * `Ok`: 都道府県。
 /// * `Err`: エラー。
 async fn retrieve_prefecture(
-    repos: &dyn DatabaseService,
+    db_service: &dyn DatabaseService,
     txn: &DatabaseTransaction,
     code: u8,
 ) -> Result<Prefecture, Error> {
-    let repo = repos.prefecture(txn);
+    let repo = db_service.prefecture(txn);
     let result = repo.find_by_code(code).await;
     if let Err(err) = result {
         return Err(internal_error(err.into()));
@@ -206,7 +206,7 @@ fn usecases_error(code: ErrorKind, message: Cow<'static, str>) -> Error {
 ///
 /// # Arguments
 ///
-/// * `repos` - リポジトリエクステンション。
+/// * `db_service` - リポジトリエクステンション。
 /// * `txn` - データベーストランザクション。
 /// * `id` - アカウントID。
 ///
@@ -217,12 +217,12 @@ fn usecases_error(code: ErrorKind, message: Cow<'static, str>) -> Error {
 /// * `Ok`: アカウント。
 /// * `Err`: エラー。
 async fn find_account(
-    repos: &dyn DatabaseService,
+    db_service: &dyn DatabaseService,
     txn: &DatabaseTransaction,
     id: AccountId,
 ) -> Result<Account, Error> {
     // アカウントを検索
-    let result = repos.account(txn).find_by_id(id.clone()).await;
+    let result = db_service.account(txn).find_by_id(id.clone()).await;
     if let Err(err) = result {
         return Err(internal_error(err.into()));
     }
@@ -246,7 +246,7 @@ async fn find_account(
 ///
 /// # Arguments
 ///
-/// * `repos` - リポジトリエクステンション。
+/// * `db_service` - リポジトリエクステンション。
 /// * `id` - アカウントID。
 ///
 /// # Returns
@@ -270,7 +270,7 @@ pub async fn find_by_id(
     }
 }
 
-fn to_account_id(value: String) -> Result<AccountId, Error> {
+fn to_account_id(value: &str) -> Result<AccountId, Error> {
     match AccountId::try_from(value) {
         Ok(value) => Ok(value),
         Err(e) => Err(usecases_error(
@@ -481,7 +481,7 @@ pub async fn update(
     // 返却するアカウント
     let updated_account: Account;
     // アカウントIDを生成
-    let account_id = to_account_id(account.id)?;
+    let account_id = to_account_id(&account.id)?;
     // 更新する値を生成
     let name = to_name(&account.name)?;
     let fixed_number = to_phone_number(account.fixed_number.as_deref(), "fixed")?;
@@ -521,7 +521,7 @@ pub async fn update(
 ///
 /// # Arguments
 ///
-/// * `repos` - アカウントリポジトリ。
+/// * `db_service` - データベースサービス。
 /// * `id` - 削除するアカウントのID。
 ///
 /// # Returns
@@ -530,14 +530,14 @@ pub async fn update(
 ///
 /// * `Ok`: 削除したアカウント。
 /// * `Err`: エラー。
-pub async fn delete(repos: Arc<dyn DatabaseService>, id: AccountId) -> Result<(), Error> {
+pub async fn delete(db_service: &dyn DatabaseService, id: AccountId) -> Result<(), Error> {
     // トランザクションを開始
-    let txn = begin_transaction(&repos.connection()).await?;
+    let txn = begin_transaction(&db_service.connection()).await?;
     {
         // アカウントを取得
-        let _ = find_account(&*repos, &txn, id.clone()).await?;
+        let _ = find_account(db_service, &txn, id.clone()).await?;
         // アカウントを削除
-        let result = repos.account(&txn).delete(id).await;
+        let result = db_service.account(&txn).delete(id).await;
         if let Err(err) = result {
             return Err(internal_error(err.into()));
         }
@@ -565,7 +565,7 @@ pub struct ChangePassword {
 ///
 /// # Arguments
 ///
-/// * `repos` - リポジトリエクステンション。
+/// * `db_service` - リポジトリエクステンション。
 /// * `id` - パスワードを変更するアカウントのアカウントID。
 /// * `old_password` - 変更前のパスワード。
 /// * `new_password` - 変更後のパスワード。
@@ -577,7 +577,7 @@ pub struct ChangePassword {
 /// * `Ok`: パスワードの変更に成功した場合は`()`。
 /// * `Err`: エラー。
 pub async fn change_password<'a>(
-    repos: Arc<dyn DatabaseService>,
+    db_service: Arc<dyn DatabaseService>,
     id: AccountId,
     old_password: &'a str,
     new_password: &'a str,
@@ -601,10 +601,10 @@ pub async fn change_password<'a>(
     }
     let new_password = new_password.unwrap();
     // トランザクションを開始
-    let txn = begin_transaction(&repos.connection()).await?;
+    let txn = begin_transaction(&db_service.connection()).await?;
     {
         // パスワードを変更するアカウントを取得
-        let account = find_account(&*repos, &txn, id.clone()).await?;
+        let account = find_account(&*db_service, &txn, id.clone()).await?;
         // パスワードが一致することを確認
         let result = verify_password(&old_password.value(), &account.password().value());
         if let Err(err) = result {
@@ -619,7 +619,7 @@ pub async fn change_password<'a>(
         // パスワードをハッシュ化
         let hashed_password = HashedPassword::new(new_password);
         // パスワードを変更
-        let result = repos
+        let result = db_service
             .account(&txn)
             .change_password(id, hashed_password)
             .await;
