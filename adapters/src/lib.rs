@@ -65,7 +65,14 @@ fn prefecture_scope() -> actix_web::Scope {
 }
 
 /// アカウントスコープ
+///
+/// # アカウント登録API
+///
+/// ```bash
+/// curl --include --request POST --header "Content-Type: application/json" --data '{"email": "foo@example.com", "name": "foo", "password": "012abcEFG=+", "isActive": true, "fixedNumber": "012-345-6789", "mobileNumber": "090-1234-5678", "postalCode": "012-3456", "prefectureCode": 13, "addressDetails": "千代田区永田町1-7-1"}' http://127.0.0.1:8000/accounts
+/// ```
 fn accounts_scope() -> actix_web::Scope {
     web::scope("/accounts")
+        .service(web::resource("").route(web::post().to(handlers::accounts::insert)))
         .service(web::resource("/{id}").route(web::get().to(handlers::accounts::find_by_id)))
 }

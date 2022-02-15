@@ -2,7 +2,10 @@ use actix_web::{web, HttpResponse, Responder};
 use serde_json::json;
 
 use domains::models::accounts::AccountId;
-use usecases::{accounts::ErrorKind, database_service::DatabaseService};
+use usecases::{
+    accounts::{ErrorKind, NewAccount},
+    database_service::DatabaseService,
+};
 
 /// アカウント検索API。
 ///
@@ -44,6 +47,34 @@ pub async fn find_by_id(
                 _ => HttpResponse::BadRequest(),
             };
             response.json(json!({"message": err.message }))
+        }
+    }
+}
+
+/// アカウント登録API
+///
+/// # Arguments
+///
+/// * `db_service` - データベースサービス。
+/// * `new_account` - 登録するアカウント。
+///
+/// # Returns
+///
+/// レスポンス。
+pub async fn insert(
+    db_service: web::Data<dyn DatabaseService>,
+    new_account: web::Json<NewAccount>,
+) -> impl Responder {
+    match usecases::accounts::insert(db_service.as_ref(), new_account.into_inner()).await {
+        Ok(account) => HttpResponse::Created().json(account),
+        Err(err) => {
+            log::error!("{:?}", err);
+            let mut response = match err.code {
+                ErrorKind::InternalServerError => HttpResponse::InternalServerError(),
+                ErrorKind::PrefectureNotFound => HttpResponse::NotFound(),
+                _ => HttpResponse::BadRequest(),
+            };
+            response.json(json!({"message": err.message}))
         }
     }
 }

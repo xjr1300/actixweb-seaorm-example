@@ -385,7 +385,7 @@ pub struct NewAccount {
 ///
 /// # Arguments
 ///
-/// * `repos` - アカウントリポジトリ。
+/// * `db_service` - データベースサービス。
 /// * `new` - 登録するアカウント。
 ///
 /// # Returns
@@ -394,7 +394,10 @@ pub struct NewAccount {
 ///
 /// * `Ok`: 登録したアカウント。
 /// * `Err`: エラー。
-pub async fn insert(repos: Arc<dyn DatabaseService>, new: NewAccount) -> Result<AccountDto, Error> {
+pub async fn insert(
+    db_service: &dyn DatabaseService,
+    new: NewAccount,
+) -> Result<AccountDto, Error> {
     // 返却するアカウント
     let new_account: Account;
     // アカウントに設定する値を生成
@@ -407,10 +410,10 @@ pub async fn insert(repos: Arc<dyn DatabaseService>, new: NewAccount) -> Result<
     let postal_code = to_postal_code(&new.postal_code)?;
     let address_details = to_address_details(&new.address_details)?;
     // トランザクションを開始
-    let txn = begin_transaction(&repos.connection()).await?;
+    let txn = begin_transaction(&db_service.connection()).await?;
     {
         // アカウントに記録されていた都道府県コードから都道府県を取得
-        let prefecture = retrieve_prefecture(&*repos, &txn, new.prefecture_code).await?;
+        let prefecture = retrieve_prefecture(db_service, &txn, new.prefecture_code).await?;
         // 登録するアカウントを生成
         let account = Account::new(
             email,
@@ -422,7 +425,7 @@ pub async fn insert(repos: Arc<dyn DatabaseService>, new: NewAccount) -> Result<
             Address::new(prefecture, address_details),
         );
         // アカウントを登録
-        let account_repo = repos.account(&txn);
+        let account_repo = db_service.account(&txn);
         let result = account_repo.insert(&account).await;
         if let Err(err) = result {
             return Err(internal_error(err.into()));
