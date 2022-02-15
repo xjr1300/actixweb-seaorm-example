@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+async-trait = "0.1"
+anyhow = "1.0"
+derive-new = "0.5"
+domains = { path = "../domains" }
+ulid = "0.5"
 
 [dependencies.sea-orm]
 version = "^0"
