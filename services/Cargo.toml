@@ -13,5 +13,10 @@ log4rs = "1.0"
 
 [dependencies.sea-orm]
 version = "^0"
-features = ["sqlx-postgres", "runtime-actix-native-tls", "macros", "debug-print"]
+features = [
+    "sqlx-postgres",
+    "runtime-actix-native-tls",
+    "macros",
+    "debug-print"
+]
 default-features = false

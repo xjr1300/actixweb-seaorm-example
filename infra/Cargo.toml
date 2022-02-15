@@ -9,8 +9,14 @@ anyhow = "1.0"
 derive-new = "0.5"
 domains = { path = "../domains" }
 ulid = "0.5"
+usecases = { path = "../usecases" }
 
 [dependencies.sea-orm]
 version = "^0"
-features = ["sqlx-postgres", "runtime-actix-native-tls", "macros", "debug-print"]
+features = [
+    "sqlx-postgres",
+    "runtime-actix-native-tls",
+    "macros",
+    "debug-print"
+]
 default-features = false
