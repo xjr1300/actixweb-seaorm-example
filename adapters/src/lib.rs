@@ -49,7 +49,11 @@ pub async fn run(address: &SocketAddr) -> anyhow::Result<()> {
             )
             .service(
                 web::scope("/prefectures")
-                    .service(web::resource("").route(web::get().to(handlers::prefectures::list))),
+                    .service(web::resource("").route(web::get().to(handlers::prefectures::list)))
+                    .service(
+                        web::resource("/{code}")
+                            .route(web::get().to(handlers::prefectures::find_by_code)),
+                    ),
             )
     })
     .bind(address)?
