@@ -5,3 +5,16 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4.0.0-rc.3"
+anyhow = "1.0"
+common = { path = "../common" }
+log = "0.4"
+
+[dependencies.sea-orm]
+version = "^0"
+features = [
+    "sqlx-postgres",
+    "runtime-actix-native-tls",
+    "macros",
+    "debug-print"
+]
+default-features = false
