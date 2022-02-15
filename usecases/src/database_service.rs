@@ -7,7 +7,7 @@ use domains::repositories::{
 use crate::queries::AccountQueryService;
 
 /// データベースサービス
-pub trait DatabaseService {
+pub trait DatabaseService: Send + Sync {
     /// データベースコネクションを返却する。
     ///
     /// # Returns

@@ -7,6 +7,10 @@ edition = "2021"
 actix-web = "4.0.0-rc.3"
 anyhow = "1.0"
 common = { path = "../common" }
+derive-new = "0.5"
+domains = { path = "../domains" }
+infra = { path = "../infra" }
+usecases = { path = "../usecases" }
 log = "0.4"
 
 [dependencies.sea-orm]
