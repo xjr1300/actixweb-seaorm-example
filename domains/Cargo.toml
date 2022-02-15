@@ -1,0 +1,24 @@
+[package]
+name = "domains"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+async-trait = "0.1"
+chrono = "0.4"
+common = { path = "../common" }
+derive-new = "0.5"
+fastrand = "1.6"
+hex = "0.4"
+lazy_static = "1.4"
+regex = "1.5"
+serde = "1.0"
+sha2 = "0.10"
+strum = "0.23"
+strum_macros = "0.23"
+ulid = "0.5"
+validator = { version = "0.14", features = ["derive"] }
+
+[dev-dependencies]
+mockall = "0.11"

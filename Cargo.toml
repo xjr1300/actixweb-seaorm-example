@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "common",
+    "domains",
     "infra",
     "adapters",
     "services",
