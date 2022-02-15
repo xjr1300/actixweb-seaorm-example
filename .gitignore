@@ -1,0 +1,5 @@
+/target
+/**/target
+/pg-data
+/log
+Cargo.lock
