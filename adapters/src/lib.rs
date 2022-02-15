@@ -1,6 +1,10 @@
 use std::{net::SocketAddr, sync::Arc};
 
-use actix_web::{web::Data, App, HttpServer};
+use actix_web::{
+    self,
+    web::{self, Data},
+    App, HttpServer,
+};
 use anyhow::anyhow;
 use sea_orm::Database;
 
@@ -40,7 +44,13 @@ pub async fn run(address: &SocketAddr) -> anyhow::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(db_service.clone())
-            .service(handlers::hello)
+            .service(
+                web::scope("/").service(web::resource("").route(web::get().to(handlers::hello))),
+            )
+            .service(
+                web::scope("/prefectures")
+                    .service(web::resource("").route(web::get().to(handlers::prefectures::list))),
+            )
     })
     .bind(address)?
     .run()

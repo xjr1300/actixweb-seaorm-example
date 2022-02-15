@@ -18,9 +18,9 @@ use crate::database_service::DatabaseService;
 ///
 /// * `Ok`: 都道府県のリスト。
 /// * `Err`: エラー。
-pub async fn list(repos: Arc<dyn DatabaseService>) -> anyhow::Result<Vec<Prefecture>> {
-    let txn = repos.connection().begin().await?;
-    let result = repos.prefecture(&txn).list().await?;
+pub async fn list(db_service: &dyn DatabaseService) -> anyhow::Result<Vec<Prefecture>> {
+    let txn = db_service.connection().begin().await?;
+    let result = db_service.prefecture(&txn).list().await?;
     txn.commit().await?;
 
     Ok(result)
