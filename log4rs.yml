@@ -1,0 +1,24 @@
+appenders:
+  stdout:
+    kind: console
+  file:
+    kind: rolling_file
+    path: log/http.log
+    append: true
+    # encoder:
+    #   kind: pattern
+    policy:
+      kind: compound
+      trigger:
+        kind: size
+        limit: 1 mb
+      roller:
+        kind: fixed_window
+        pattern: "log/http.log.{{}}"
+        base: 1
+        count: 10
+root:
+  level: info
+  appenders:
+    - stdout
+    - file
