@@ -37,11 +37,12 @@ pub async fn list(db_service: web::Data<dyn DatabaseService>) -> impl Responder 
 
 /// 都道府県検索API。
 ///
-/// 指定された都道府県コードの都道府県をJSONで返却する。
+/// 指定された都道府県コードと一致する都道府県をJSONで返却する。
 ///
 /// # Arguments
 ///
 /// * `db_service` - データベースサービス。
+/// * `path` - 引数で指定されたデータを格納するタプル。
 ///
 /// # Returns
 ///

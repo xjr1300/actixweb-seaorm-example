@@ -159,7 +159,7 @@ async fn retrieve_prefecture(
     let result = result.unwrap();
     // 都道府県を取得できたか確認
     if result.is_none() {
-        return Err(usecase_error(
+        return Err(usecases_error(
             ErrorKind::PrefectureNotFound,
             format!(
                 "アカウントに記録されていた都道府県コード({})と一致する都道府県が見つかりません。",
@@ -198,7 +198,7 @@ fn internal_error(err: Box<dyn std::error::Error>) -> Error {
 /// # Returns
 ///
 /// ユースケースエラー。
-fn usecase_error(code: ErrorKind, message: Cow<'static, str>) -> Error {
+fn usecases_error(code: ErrorKind, message: Cow<'static, str>) -> Error {
     Error { code, message }
 }
 
@@ -229,7 +229,7 @@ async fn find_account(
     let result = result.unwrap();
     // アカウントが見つからなかった場合
     if result.is_none() {
-        return Err(usecase_error(
+        return Err(usecases_error(
             ErrorKind::NotFound,
             format!(
                 "アカウントID({})と一致するアカウントが見つかりません。",
@@ -256,13 +256,13 @@ async fn find_account(
 /// * `Ok`: アカウント。検索できなかった場合は`None`。
 /// * `Err`: エラー。
 pub async fn find_by_id(
-    repos: Arc<dyn DatabaseService>,
+    db_service: &dyn DatabaseService,
     id: AccountId,
 ) -> Result<AccountDto, Error> {
     // トランザクションを開始
-    let txn = begin_transaction(&repos.connection()).await?;
+    let txn = begin_transaction(&db_service.connection()).await?;
     // アカウントを取得
-    let account = find_account(&*repos, &txn, id.clone()).await?;
+    let account = find_account(db_service, &txn, id.clone()).await?;
     // トランザクションをコミット
     match txn.commit().await {
         Ok(_) => Ok(account.into()),
@@ -273,7 +273,7 @@ pub async fn find_by_id(
 fn to_account_id(value: String) -> Result<AccountId, Error> {
     match AccountId::try_from(value) {
         Ok(value) => Ok(value),
-        Err(e) => Err(usecase_error(
+        Err(e) => Err(usecases_error(
             ErrorKind::InvalidAccountId,
             format!("{}", e).into(),
         )),
@@ -283,7 +283,7 @@ fn to_account_id(value: String) -> Result<AccountId, Error> {
 fn to_email(value: &str) -> Result<EmailAddress, Error> {
     match EmailAddress::new(value) {
         Ok(value) => Ok(value),
-        Err(e) => Err(usecase_error(
+        Err(e) => Err(usecases_error(
             ErrorKind::InvalidEmailAddress,
             format!("{}", e).into(),
         )),
@@ -293,7 +293,7 @@ fn to_email(value: &str) -> Result<EmailAddress, Error> {
 fn to_name(value: &str) -> Result<AccountName, Error> {
     match AccountName::new(value) {
         Ok(value) => Ok(value),
-        Err(err) => Err(usecase_error(
+        Err(err) => Err(usecases_error(
             ErrorKind::InvalidName,
             format!("{}", err).into(),
         )),
@@ -303,7 +303,7 @@ fn to_name(value: &str) -> Result<AccountName, Error> {
 fn to_raw_password(value: &str) -> Result<RawPassword, Error> {
     match RawPassword::new(value) {
         Ok(value) => Ok(value),
-        Err(err) => Err(usecase_error(
+        Err(err) => Err(usecases_error(
             ErrorKind::InvalidPassword,
             format!("{}", err).into(),
         )),
@@ -319,7 +319,7 @@ fn to_phone_number(value: Option<&str>, prefix: &str) -> Result<Option<PhoneNumb
             } else {
                 (ErrorKind::InvalidMobileNumber, "携帯")
             };
-            Err(usecase_error(code, format!("{}{}", name, err).into()))
+            Err(usecases_error(code, format!("{}{}", name, err).into()))
         }
     }
 }
@@ -330,7 +330,7 @@ fn to_phone_numbers(
 ) -> Result<FixedMobileNumbers, Error> {
     match FixedMobileNumbers::new(fixed, mobile) {
         Ok(value) => Ok(value),
-        Err(err) => Err(usecase_error(
+        Err(err) => Err(usecases_error(
             ErrorKind::InvalidPhoneNumbers,
             format!("{}", err).into(),
         )),
@@ -340,7 +340,7 @@ fn to_phone_numbers(
 fn to_postal_code(value: &str) -> Result<PostalCode, Error> {
     match PostalCode::new(value) {
         Ok(value) => Ok(value),
-        Err(err) => Err(usecase_error(
+        Err(err) => Err(usecases_error(
             ErrorKind::InvalidPostalCode,
             format!("{}", err).into(),
         )),
@@ -350,7 +350,7 @@ fn to_postal_code(value: &str) -> Result<PostalCode, Error> {
 fn to_address_details(value: &str) -> Result<AddressDetails, Error> {
     match AddressDetails::new(value) {
         Ok(value) => Ok(value),
-        Err(err) => Err(usecase_error(
+        Err(err) => Err(usecases_error(
             ErrorKind::InvalidAddressDetails,
             format!("{}", err).into(),
         )),
@@ -582,7 +582,7 @@ pub async fn change_password<'a>(
     // 古いパスワードを検証
     let old_password = RawPassword::new(old_password);
     if old_password.is_err() {
-        return Err(usecase_error(
+        return Err(usecases_error(
             ErrorKind::InvalidOldPassword,
             "古いパスワードが不正です。".into(),
         ));
@@ -591,7 +591,7 @@ pub async fn change_password<'a>(
     // 新しいパスワードを検証
     let new_password = RawPassword::new(new_password);
     if new_password.is_err() {
-        return Err(usecase_error(
+        return Err(usecases_error(
             ErrorKind::InvalidNewPassword,
             "新しいパスワードが不正です。".into(),
         ));

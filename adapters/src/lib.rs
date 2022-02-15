@@ -48,6 +48,7 @@ pub async fn run(address: &SocketAddr) -> anyhow::Result<()> {
                 web::scope("/").service(web::resource("").route(web::get().to(handlers::hello))),
             )
             .service(prefecture_scope())
+            .service(accounts_scope())
     })
     .bind(address)?
     .run()
@@ -56,8 +57,15 @@ pub async fn run(address: &SocketAddr) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// 都道府県スコープ
 fn prefecture_scope() -> actix_web::Scope {
     web::scope("/prefectures")
         .service(web::resource("").route(web::get().to(handlers::prefectures::list)))
         .service(web::resource("/{code}").route(web::get().to(handlers::prefectures::find_by_code)))
+}
+
+/// アカウントスコープ
+fn accounts_scope() -> actix_web::Scope {
+    web::scope("/accounts")
+        .service(web::resource("/{id}").route(web::get().to(handlers::accounts::find_by_id)))
 }
