@@ -4,6 +4,10 @@
         "chrono",
         "hmac",
         "middlewares",
-        "usecases",
+        "rustls",
+        "seaorm",
+        "SIGKILL",
+        "sqlx",
+        "usecases"
     ]
 }
