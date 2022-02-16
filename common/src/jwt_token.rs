@@ -73,14 +73,12 @@ pub fn decode_jwt_token(token: &str) -> anyhow::Result<Claims> {
     Ok(claims)
 }
 
-/*
 #[cfg(test)]
 mod auth_tests {
     use super::*;
-    use common::ENV_VALUES;
-    use domains::models::accounts::AccountId;
+    use chrono::Duration;
     use dotenv;
-    use jwt::VerifyWithKey;
+    use ulid::Ulid;
 
     /// JWTを正常に生成できることを確認する。
     #[test]
@@ -88,18 +86,26 @@ mod auth_tests {
         dotenv::from_filename(".env.dev").ok();
         // JWTを生成
         let id = Ulid::new().to_string();
-        let expired = local_now(None) + Duration::days(1);
-        let token = gen_jwt_token(id.clone(), expired);
+        let expired = Utc::now() + Duration::days(1);
+        let claims = Claims {
+            sub: id.clone(),
+            exp: expired.timestamp(),
+        };
+        let token = gen_jwt_token(&claims);
         if let Err(ref err) = token {
-            assert!(false, "JWTを生成できませんでした。{:?}。", err);
+            assert!(
+                false,
+                "JWTトークンをエンコードできませんでした。{:?}。",
+                err
+            );
         }
         // 生成したトークンを検証
-        let token = token.unwrap();
-        let secret_key = &ENV_VALUES.jwt_token_secret_key;
-        let key: Hmac<Sha256> = Hmac::new_from_slice(secret_key.as_bytes()).unwrap();
-        let claims: BTreeMap<String, String> = token.verify_with_key(&key).unwrap();
-        assert_eq!(claims["sub"], id.value.to_string());
-        assert_eq!(claims["exp"], expired.timestamp().to_string());
+        let decoded = decode_jwt_token(&token.unwrap());
+        if let Err(ref err) = decoded {
+            assert!(false, "JWTトークンをデコードできませんでした。{:?}。", err);
+        }
+        let decoded = decoded.unwrap();
+        assert_eq!(claims.sub, decoded.sub);
+        assert_eq!(claims.exp, decoded.exp);
     }
 }
-*/
