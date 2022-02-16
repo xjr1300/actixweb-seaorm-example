@@ -1,8 +1,10 @@
 use actix_web::{web, HttpResponse, Responder};
 use serde_json::json;
 
-use usecases::auth::{Credential, ErrorKind};
-use usecases::database_service::DatabaseService;
+use usecases::{
+    auth::{Credential, ErrorKind},
+    database_service::DatabaseService,
+};
 
 /// 有効期限付きアクセス・リフレッシュトークンを取得する。
 ///

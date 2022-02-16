@@ -8,5 +8,6 @@ actix-web = "4.0.0-rc.3"
 adapters = { path = "../adapters" }
 anyhow = "1.0"
 common = { path = "../common" }
+dotenv = "0.15"
 log = "0.4"
 log4rs = "1.0"

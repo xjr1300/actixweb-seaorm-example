@@ -13,6 +13,7 @@ use usecases::database_service::DatabaseService;
 
 mod database_service;
 mod handlers;
+mod middlewares;
 use crate::database_service::DatabaseServiceImpl;
 
 /// Web APIサーバーを起動する。
@@ -89,6 +90,10 @@ fn accounts_scope() -> actix_web::Scope {
         .route("/{id}", web::get().to(handlers::accounts::find_by_id))
         .route("/{id}", web::put().to(handlers::accounts::update))
         .route("/{id}", web::delete().to(handlers::accounts::delete))
+        .route(
+            "/{id}/change_password",
+            web::post().to(handlers::accounts::change_password),
+        )
 }
 
 /// 認証スコープ

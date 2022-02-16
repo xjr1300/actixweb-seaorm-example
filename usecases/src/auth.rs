@@ -182,7 +182,7 @@ fn gen_jwt_tokens(account_id: AccountId) -> Result<JwtTokens, Error> {
     let refresh_expired_at = now + Duration::seconds(ENV_VALUES.refresh_token_seconds);
     // トークンを生成
     let mut claims = Claims {
-        sub: account_id.value.to_string().clone(),
+        sub: account_id.value.to_string(),
         exp: access_expired_at.timestamp(),
     };
     let access = gen_jwt_token(&claims);

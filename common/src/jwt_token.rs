@@ -8,7 +8,7 @@ use sha2::Sha256;
 use crate::ENV_VALUES;
 
 /// クレイム
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Claims {
     /// アカウントID.
     pub sub: String,

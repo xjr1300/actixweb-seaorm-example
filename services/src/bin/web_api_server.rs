@@ -45,6 +45,8 @@ fn server_socket_address() -> anyhow::Result<SocketAddr> {
 /// Web APIサーバーのエントリポイント
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // 環境変数をロード
+    dotenv::dotenv().ok();
     // 環境変数の内容でロギングを設定
     init_logging().unwrap();
 

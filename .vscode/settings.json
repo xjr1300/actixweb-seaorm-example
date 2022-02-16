@@ -3,6 +3,7 @@
         "appenders",
         "chrono",
         "hmac",
-        "usecases"
+        "middlewares",
+        "usecases",
     ]
 }

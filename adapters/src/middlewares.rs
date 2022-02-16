@@ -9,6 +9,7 @@ use common::jwt_token::{decode_jwt_token, Claims};
 ///
 /// HTTPリクエストヘッダの`Authorization`に記録されている`Bearer`トークンで
 /// 認証済みであるかを示す。
+#[derive(Clone)]
 pub enum JwtAuth {
     /// 認証状態(データにクレーム)を管理
     Authenticate(Claims),
@@ -22,7 +23,7 @@ impl FromRequest for JwtAuth {
 
     fn from_request(
         req: &actix_web::HttpRequest,
-        payload: &mut actix_http::Payload,
+        _payload: &mut actix_http::Payload,
     ) -> Self::Future {
         // Authorizationヘッダを取得
         let auth = req.headers().get("Authorization");
@@ -32,11 +33,11 @@ impl FromRequest for JwtAuth {
         let auth = auth.unwrap().to_owned();
         // Bearerトークンを取得
         let split: Vec<&str> = auth.to_str().unwrap().split("Bearer").collect();
-        let token = split[1].trim();
+        let token = split[1].trim().to_owned();
         // トークンをデコード
         Box::pin(async move {
-            decode_jwt_token(token)
-                .map(|claims| JwtAuth::Authenticate(claims))
+            decode_jwt_token(&token)
+                .map(JwtAuth::Authenticate)
                 .map_err(|err| ErrorUnauthorized(format!("{}", err)))
         })
     }
