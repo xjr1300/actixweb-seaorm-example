@@ -7,7 +7,7 @@ use usecases::{
     database_service::DatabaseService,
 };
 
-use crate::middlewares::JwtAuth;
+use crate::extractors::JwtAuth;
 
 /// アカウントIDを検証する。
 ///
