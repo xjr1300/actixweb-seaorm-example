@@ -3,9 +3,11 @@ use serde_json::json;
 
 use domains::models::accounts::AccountId;
 use usecases::{
-    accounts::{ErrorKind, NewAccount, UpdateAccount},
+    accounts::{ChangePassword, ErrorKind, NewAccount, UpdateAccount},
     database_service::DatabaseService,
 };
+
+use crate::middlewares::JwtAuth;
 
 /// アカウントIDを検証する。
 ///
@@ -178,6 +180,75 @@ pub async fn delete(
                 _ => HttpResponse::BadRequest(),
             };
             response.json(json!({"message": err.message }))
+        }
+    }
+}
+
+/// パスワードを変更する。
+///
+/// #Arguments
+///
+/// * `repos` - リポジトリエクステンション。
+/// * `id` - アカウントID。
+/// * `data` - パスワード変更データ。
+/// ```bash
+/// curl --include --request POST --header "Authorization: Bearer <token>; Content-Type: application/json" \
+/// --data '{"id": "<account-id>", "oldPassword": "<old-password>", "newPassword": "<new-password>"}' \
+/// http://127.0.0.1:8000/accounts/change_password/<account-id>
+/// ```
+pub async fn change_password(
+    db_service: web::Data<dyn DatabaseService>,
+    path: web::Path<(String,)>,
+    data: web::Json<ChangePassword>,
+    jwt_auth: JwtAuth,
+) -> impl Responder {
+    // 認証されているか確認
+    let claims;
+    match jwt_auth {
+        JwtAuth::Anonymous => {
+            return HttpResponse::Unauthorized().json(json!({"message": "認証されていません。"}));
+        }
+        JwtAuth::Authenticate(c) => claims = c,
+    };
+    // アカウントIDを検証
+    let result = validate_account_id(&path.into_inner().0);
+    if let Err(err) = result {
+        return err;
+    }
+    let account_id = result.unwrap();
+    // URLで指定されたアカウントIDとJSONデータに記録されているアカウントIDが異なる場合はエラー
+    let data = data.into_inner();
+    if account_id.value.to_string() != data.id {
+        let body = json!({
+            "message": "URLで指定されたアカウントIDとリクエストボディに指定されたアカウントIDが異なります。"
+        });
+        return HttpResponse::BadRequest().json(json!(body));
+    }
+    // URLで指定されたアカウントIDとJWTトークンに指定されたアカウントIDが異なる場合はエラー
+    if account_id.value.to_string() != claims.sub {
+        let body = json!({
+            "message": "URLで指定されたアカウントIDとJWTトークンに指定されたアカウントIDが異なります。"
+        });
+        return HttpResponse::BadRequest().json(json!(body));
+    }
+    // アカウントのパスワードの変更を試行
+    match usecases::accounts::change_password(
+        db_service.as_ref(),
+        account_id,
+        &data.old_password,
+        &data.new_password,
+    )
+    .await
+    {
+        Ok(_) => HttpResponse::Ok().json(json!({"message": "パスワードを変更しました。"})),
+        Err(err) => {
+            let mut response = match err.code {
+                ErrorKind::InvalidOldPassword => HttpResponse::BadRequest(),
+                ErrorKind::InvalidNewPassword => HttpResponse::BadRequest(),
+                ErrorKind::WrongPassword => HttpResponse::BadRequest(),
+                _ => HttpResponse::InternalServerError(),
+            };
+            response.json(json!({"message": err.message}))
         }
     }
 }

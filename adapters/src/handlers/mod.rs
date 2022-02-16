@@ -1,4 +1,5 @@
 pub mod accounts;
+pub mod auth;
 pub mod prefectures;
 
 use actix_web::{HttpResponse, Responder};

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, sync::Arc};
+use std::borrow::Cow;
 
 use chrono::{DateTime, FixedOffset};
 use sea_orm::{ConnectionTrait, DatabaseConnection, DatabaseTransaction};
@@ -577,7 +577,7 @@ pub struct ChangePassword {
 /// * `Ok`: パスワードの変更に成功した場合は`()`。
 /// * `Err`: エラー。
 pub async fn change_password<'a>(
-    db_service: Arc<dyn DatabaseService>,
+    db_service: &dyn DatabaseService,
     id: AccountId,
     old_password: &'a str,
     new_password: &'a str,

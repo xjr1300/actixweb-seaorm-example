@@ -13,6 +13,7 @@ use usecases::database_service::DatabaseService;
 
 mod database_service;
 mod handlers;
+mod middlewares;
 use crate::database_service::DatabaseServiceImpl;
 
 /// Web APIサーバーを起動する。
@@ -49,6 +50,7 @@ pub async fn run(address: &SocketAddr) -> anyhow::Result<()> {
             )
             .service(prefecture_scope())
             .service(accounts_scope())
+            .service(auth_scope())
     })
     .bind(address)?
     .run()
@@ -88,4 +90,21 @@ fn accounts_scope() -> actix_web::Scope {
         .route("/{id}", web::get().to(handlers::accounts::find_by_id))
         .route("/{id}", web::put().to(handlers::accounts::update))
         .route("/{id}", web::delete().to(handlers::accounts::delete))
+        .route(
+            "/{id}/change_password",
+            web::post().to(handlers::accounts::change_password),
+        )
+}
+
+/// 認証スコープ
+///
+/// ```bash
+/// # トークン取得API
+/// curl --include --request POST --header "Content-Type: application/json" --data '{"email": "<email?", "password": "<password>"}' http://127.0.0.1:8000/auth/obtain_tokens
+/// ```
+fn auth_scope() -> actix_web::Scope {
+    web::scope("/auth").route(
+        "/obtain_tokens",
+        web::post().to(handlers::auth::obtain_tokens),
+    )
 }
