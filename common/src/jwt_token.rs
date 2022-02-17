@@ -1,3 +1,6 @@
+use std::{future::Future, pin::Pin};
+
+use actix_web::{error::ErrorUnauthorized, Error, FromRequest};
 use anyhow::anyhow;
 use chrono::{TimeZone, Utc};
 use hmac::{Hmac, Mac};
@@ -14,6 +17,32 @@ pub struct Claims {
     pub sub: String,
     /// 有効期限を示すUnixエポック(1970-01-01(UTC)からの経過秒数)。
     pub exp: i64,
+}
+
+impl FromRequest for Claims {
+    type Error = Error;
+    type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
+
+    fn from_request(
+        req: &actix_web::HttpRequest,
+        _payload: &mut actix_http::Payload,
+    ) -> Self::Future {
+        // Authorizationヘッダを取得
+        let auth = req.headers().get("Authorization");
+        if auth.is_none() {
+            return Box::pin(async move {
+                Err(ErrorUnauthorized("Authorizationヘッダが存在しません。"))
+            });
+        }
+        let auth = auth.unwrap().to_owned();
+        // Bearerトークンを取得
+        let split: Vec<&str> = auth.to_str().unwrap().split("Bearer").collect();
+        let token = split[1].trim().to_owned();
+        // トークンをデコード
+        Box::pin(async move {
+            decode_jwt_token(&token).map_err(|err| ErrorUnauthorized(format!("{}", err)))
+        })
+    }
 }
 
 /// JWTトークンを生成する。
