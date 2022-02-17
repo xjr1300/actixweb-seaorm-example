@@ -1,13 +1,12 @@
 use actix_web::{web, HttpResponse, Responder};
 use serde_json::json;
 
+use common::jwt_token::Claims;
 use domains::models::accounts::AccountId;
 use usecases::{
     accounts::{ChangePassword, ErrorKind, NewAccount, UpdateAccount},
     database_service::DatabaseService,
 };
-
-use crate::extractors::JwtAuth;
 
 /// アカウントIDを検証する。
 ///
@@ -200,16 +199,8 @@ pub async fn change_password(
     db_service: web::Data<dyn DatabaseService>,
     path: web::Path<(String,)>,
     data: web::Json<ChangePassword>,
-    jwt_auth: JwtAuth,
+    claims: Claims,
 ) -> impl Responder {
-    // 認証されているか確認
-    let claims;
-    match jwt_auth {
-        JwtAuth::Anonymous => {
-            return HttpResponse::Unauthorized().json(json!({"message": "認証されていません。"}));
-        }
-        JwtAuth::Authenticate(c) => claims = c,
-    };
     // アカウントIDを検証
     let result = validate_account_id(&path.into_inner().0);
     if let Err(err) = result {

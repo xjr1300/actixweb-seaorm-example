@@ -12,7 +12,6 @@ use common::ENV_VALUES;
 use usecases::database_service::DatabaseService;
 
 mod database_service;
-mod extractors;
 mod handlers;
 use crate::database_service::DatabaseServiceImpl;
 
