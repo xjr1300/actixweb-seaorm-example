@@ -231,7 +231,7 @@ impl HashedPassword {
     /// # Returns
     ///
     /// ハッシュ化パスワード。
-    pub fn new_unchecked(value: &str) -> Self {
+    pub fn from_repository(value: &str) -> Self {
         Self {
             value: value.to_owned(),
         }
@@ -255,7 +255,7 @@ mod hashed_password_tests {
     #[test]
     fn test_hashed_password_new_unchecked() {
         let hashed = "this-is-hashed-password";
-        let value = HashedPassword::new_unchecked(hashed);
+        let value = HashedPassword::from_repository(hashed);
         assert_eq!(value.value(), hashed);
     }
 }
@@ -765,7 +765,7 @@ mod account_tests {
         let id = Ulid::new();
         let email = EmailAddress::new("foo@example.com").unwrap();
         let name = AccountName::new("foo").unwrap();
-        let password = HashedPassword::new_unchecked("01abCD#$");
+        let password = HashedPassword::from_repository("01abCD#$");
         let is_active = true;
         let fixed_number = PhoneNumber::new("012-345-6890").unwrap();
         let mobile_number = PhoneNumber::new("090-1234-5678").unwrap();
