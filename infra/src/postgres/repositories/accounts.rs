@@ -42,7 +42,7 @@ fn model_to_account(account: &accounts::Model, prefecture: &prefectures::Model) 
         AccountId::try_from(account.id.as_str()).unwrap(),
         EmailAddress::new(&account.email).unwrap(),
         AccountName::new(&account.name).unwrap(),
-        HashedPassword::new_unchecked(&account.password),
+        HashedPassword::from_repository(&account.password),
         account.is_active,
         phone_numbers,
         PostalCode::new(&account.postal_code).unwrap(),
@@ -141,7 +141,7 @@ mod account_model_tests {
         let id = Ulid::new();
         let email = EmailAddress::new("foo@example.com").unwrap();
         let name = AccountName::new("foo").unwrap();
-        let password = HashedPassword::new_unchecked("01abCD#$");
+        let password = HashedPassword::from_repository("01abCD#$");
         let is_active = true;
         let fixed_number = PhoneNumber::new("012-345-6890").unwrap();
         let mobile_number = PhoneNumber::new("090-1234-5678").unwrap();

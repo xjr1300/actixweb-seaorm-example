@@ -78,7 +78,7 @@ impl AccountQueryService for PgAccountQueryService<'_> {
             account_id.clone(),
             EmailAddress::new(&result.email).unwrap(),
             AccountName::new(&result.name).unwrap(),
-            HashedPassword::new_unchecked(&result.password),
+            HashedPassword::from_repository(&result.password),
             result.is_active,
             phone_numbers,
             PostalCode::new(&result.postal_code).unwrap(),
